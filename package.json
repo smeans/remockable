@@ -1,7 +1,7 @@
 {
   "name": "remockable",
   "version": "0.1.0",
-  "description": "A command-line tool.",
+  "description": "A simple, zero-friction web service mockup server.",
   "type": "module",
   "bin": {
     "remockable": "bin/remockable.js"
@@ -26,10 +26,22 @@
   },
   "keywords": [
     "cli",
-    "command-line"
+    "command-line",
+    "mock",
+    "mock-server",
+    "web-service",
+    "api"
   ],
   "author": "Scott Means",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/smeans/remockable.git"
+  },
+  "bugs": {
+    "url": "https://github.com/smeans/remockable/issues"
+  },
+  "homepage": "https://github.com/smeans/remockable#readme",
   "dependencies": {
     "commander": "^12.1.0"
   }
