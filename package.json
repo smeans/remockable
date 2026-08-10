@@ -1,0 +1,36 @@
+{
+  "name": "remockable",
+  "version": "0.1.0",
+  "description": "A command-line tool.",
+  "type": "module",
+  "bin": {
+    "remockable": "bin/remockable.js"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node bin/remockable.js",
+    "test": "node --test",
+    "prepublishOnly": "npm test"
+  },
+  "keywords": [
+    "cli",
+    "command-line"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^12.1.0"
+  }
+}
