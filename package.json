@@ -28,7 +28,7 @@
     "cli",
     "command-line"
   ],
-  "author": "",
+  "author": "Scott Means",
   "license": "MIT",
   "dependencies": {
     "commander": "^12.1.0"
