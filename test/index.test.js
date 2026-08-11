@@ -33,6 +33,21 @@ before(async () => {
   // Two files differing only by extension -> ambiguous -> 404.
   await fs.writeFile(path.join(root, 'ambiguous', 'thing.json'), '{}');
   await fs.writeFile(path.join(root, 'ambiguous', 'thing.txt'), 'x');
+
+  // PUT / PATCH verb files.
+  await fs.writeFile(path.join(root, 'posts', '1234.PUT.json'), '{"updated":true}');
+  await fs.writeFile(path.join(root, 'posts', '1234.PATCH.json'), '{"patched":true}');
+
+  // GET/.GET precedence fixtures.
+  await fs.mkdir(path.join(root, 'prec'), { recursive: true });
+  await fs.writeFile(path.join(root, 'prec', 'onlydefault.json'), '{"src":"default"}');
+  await fs.writeFile(path.join(root, 'prec', 'onlyget.GET.json'), '{"src":"get"}');
+  await fs.writeFile(path.join(root, 'prec', 'both.json'), '{"src":"default"}');
+  await fs.writeFile(path.join(root, 'prec', 'both.GET.json'), '{"src":"get"}');
+
+  // Multi-parameter query traversal.
+  await fs.mkdir(path.join(root, 'q', 'a', '1', 'b', '2'), { recursive: true });
+  await fs.writeFile(path.join(root, 'q', 'a', '1', 'b', '2', 'index.json'), '{"ab":true}');
 });
 
 after(async () => {
@@ -74,6 +89,29 @@ test('resolves named resource for GET and DELETE', async () => {
   assert.equal(del, path.join(root, 'posts', '1234.DELETE.json'));
 });
 
+test('resolves PUT and PATCH verb files', async () => {
+  const put = await resolve(root, 'PUT', '/posts/1234', []);
+  assert.equal(put, path.join(root, 'posts', '1234.PUT.json'));
+
+  const patch = await resolve(root, 'PATCH', '/posts/1234', []);
+  assert.equal(patch, path.join(root, 'posts', '1234.PATCH.json'));
+});
+
+test('GET uses verbless file when no explicit .GET exists', async () => {
+  const p = await resolve(root, 'GET', '/prec/onlydefault', []);
+  assert.equal(p, path.join(root, 'prec', 'onlydefault.json'));
+});
+
+test('GET uses explicit .GET file when no verbless file exists', async () => {
+  const p = await resolve(root, 'GET', '/prec/onlyget', []);
+  assert.equal(p, path.join(root, 'prec', 'onlyget.GET.json'));
+});
+
+test('explicit .GET file takes precedence over verbless file', async () => {
+  const p = await resolve(root, 'GET', '/prec/both', []);
+  assert.equal(p, path.join(root, 'prec', 'both.GET.json'));
+});
+
 test('optional extension: request without extension resolves', async () => {
   const p = await resolve(root, 'GET', '/images/logo', []);
   assert.equal(p, path.join(root, 'images', 'logo.png'));
@@ -82,6 +120,16 @@ test('optional extension: request without extension resolves', async () => {
 test('query parameters traverse the tree', async () => {
   const p = await resolve(root, 'GET', '/posts/1234', [['format', 'pdf']]);
   assert.equal(p, path.join(root, 'posts', 'format', 'pdf', '1234.json'));
+});
+
+test('multiple query parameters traverse in order', async () => {
+  const p = await resolve(root, 'GET', '/q', [['a', '1'], ['b', '2']]);
+  assert.equal(p, path.join(root, 'q', 'a', '1', 'b', '2', 'index.json'));
+});
+
+test('query parameter order is significant', async () => {
+  const reordered = await resolve(root, 'GET', '/q', [['b', '2'], ['a', '1']]);
+  assert.equal(reordered, null);
 });
 
 test('valueless query flag traverses into a directory index', async () => {
@@ -109,6 +157,11 @@ test('path traversal is rejected', async () => {
   assert.equal(p, null);
 });
 
+test('nested path traversal is rejected', async () => {
+  const p = await resolve(root, 'GET', '/posts/../../secret', []);
+  assert.equal(p, null);
+});
+
 test('HEAD is treated like GET for resolution', async () => {
   const p = await resolve(root, 'HEAD', '/posts', []);
   assert.equal(p, path.join(root, 'posts', 'index.json'));
@@ -133,6 +186,22 @@ test('server serves resolved mock over HTTP', async () => {
     const pdf = await fetch(`http://127.0.0.1:${port}/posts/1234?format=pdf`);
     assert.equal(pdf.status, 200);
     assert.equal(await pdf.text(), '{"pdf":true}');
+
+    const del = await fetch(`http://127.0.0.1:${port}/posts/1234`, { method: 'DELETE' });
+    assert.equal(del.status, 200);
+    assert.equal(await del.text(), '{"deleted":true}');
+
+    const put = await fetch(`http://127.0.0.1:${port}/posts/1234`, { method: 'PUT' });
+    assert.equal(put.status, 200);
+    assert.equal(await put.text(), '{"updated":true}');
+
+    const head = await fetch(`http://127.0.0.1:${port}/posts`, { method: 'HEAD' });
+    assert.equal(head.status, 200);
+    assert.match(head.headers.get('content-type'), /application\/json/);
+    assert.equal(await head.text(), '');
+
+    const ambiguous = await fetch(`http://127.0.0.1:${port}/ambiguous/thing`);
+    assert.equal(ambiguous.status, 404);
   } finally {
     await new Promise((r) => server.close(r));
   }

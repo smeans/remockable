@@ -1,14 +1,10 @@
 {
   "name": "@smeans/remockable",
   "version": "0.1.0",
-  "description": "A simple, zero-friction web service mockup server.",
+  "description": "A zero-config, filesystem-driven HTTP mock server.",
   "type": "module",
   "bin": {
     "remockable": "bin/remockable.js"
-  },
-  "main": "src/index.js",
-  "exports": {
-    ".": "./src/index.js"
   },
   "files": [
     "bin",
@@ -25,12 +21,16 @@
     "prepublishOnly": "npm test"
   },
   "keywords": [
-    "cli",
-    "command-line",
     "mock",
     "mock-server",
-    "web-service",
-    "api"
+    "http",
+    "api",
+    "api-mocking",
+    "testing",
+    "fixtures",
+    "development",
+    "cli",
+    "nodejs"
   ],
   "author": "Scott Means",
   "license": "MIT",

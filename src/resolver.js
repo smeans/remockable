@@ -55,8 +55,12 @@ async function matchFile(dir, requestName, method) {
   }
 
   const wantGet = method === 'GET';
-  const exact = [];
-  const byExt = [];
+  // For GET, an explicit `.GET` file takes precedence over a verbless file, so
+  // track the two tiers separately. Non-GET methods only use the explicit tier.
+  const explicitExact = [];
+  const explicitByExt = [];
+  const defaultExact = [];
+  const defaultByExt = [];
 
   for (const entry of entries) {
     if (!entry.isFile()) continue;
@@ -64,28 +68,40 @@ async function matchFile(dir, requestName, method) {
 
     const { verb, logicalName } = parseEntry(entry.name);
 
-    // Verb gating: GET matches verbless (or explicit GET) files; other
-    // methods require the matching verb token.
-    if (wantGet) {
-      if (verb !== null && verb !== 'GET') continue;
-    } else if (verb !== method) {
+    let exactBucket;
+    let byExtBucket;
+    if (wantGet && verb === null) {
+      exactBucket = defaultExact;
+      byExtBucket = defaultByExt;
+    } else if (verb === method) {
+      exactBucket = explicitExact;
+      byExtBucket = explicitByExt;
+    } else {
       continue;
     }
 
     if (logicalName === requestName) {
-      exact.push(entry.name);
+      exactBucket.push(entry.name);
     } else {
       const dot = logicalName.lastIndexOf('.');
       if (dot > 0 && logicalName.slice(0, dot) === requestName) {
         // logicalName === requestName + '.' + <ext>
-        byExt.push(entry.name);
+        byExtBucket.push(entry.name);
       }
     }
   }
 
-  if (exact.length === 1) return path.join(dir, exact[0]);
-  if (exact.length === 0 && byExt.length === 1) return path.join(dir, byExt[0]);
-  return null; // zero or ambiguous
+  // Explicit verb files win outright; fall back to verbless files only for GET.
+  for (const [exact, byExt] of [
+    [explicitExact, explicitByExt],
+    [defaultExact, defaultByExt],
+  ]) {
+    if (exact.length === 1) return path.join(dir, exact[0]);
+    if (exact.length > 1) return null; // ambiguous
+    if (byExt.length === 1) return path.join(dir, byExt[0]);
+    if (byExt.length > 1) return null; // ambiguous
+  }
+  return null; // not found
 }
 
 /**
