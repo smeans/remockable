@@ -14,18 +14,15 @@
    npm publish --dry-run
    ```
    Verify the file list contains only `bin/`, `src/`, `README.md`, `LICENSE`, and `package.json`.
-5. Publish the package:
-   ```sh
-   npm publish
-   ```
-   For a scoped name (e.g. `@you/remockable`), the first publish needs:
+5. Publish the package. Because the name is scoped (`@smeans/remockable`), the first publish must be marked public:
    ```sh
    npm publish --access public
    ```
+   Subsequent publishes can just use `npm publish`.
 6. Verify the release:
    ```sh
-   npm view remockable
-   npx remockable
+   npm view @smeans/remockable
+   npx @smeans/remockable
    ```
 
 ## Version updates
@@ -47,5 +44,5 @@ Try the command globally before publishing:
 ```sh
 npm link            # symlink the `remockable` command
 remockable    # run it from anywhere
-npm unlink -g remockable   # undo when done
+npm unlink -g @smeans/remockable   # undo when done
 ```

@@ -1,5 +1,5 @@
 {
-  "name": "remockable",
+  "name": "@smeans/remockable",
   "version": "0.1.0",
   "description": "A simple, zero-friction web service mockup server.",
   "type": "module",

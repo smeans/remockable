@@ -5,13 +5,13 @@ Remockable is a zero-friction web application mockup tool.
 ## Installation
 
 ```sh
-npm install -g remockable
+npm install -g @smeans/remockable
 ```
 
 Or run it once without installing:
 
 ```sh
-npx remockable
+npx @smeans/remockable
 ```
 
 ## Usage
